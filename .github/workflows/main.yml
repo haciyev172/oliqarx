@@ -1,0 +1,72 @@
+name: OliqarxKlub APK Builder
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Android Release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.3'
+          channel: stable
+          cache: true
+
+      # This archive did not include Gradle wrapper files. Generate a clean
+      # Android template and copy only the wrapper files so custom app files
+      # are preserved.
+      - name: Restore missing Gradle wrapper files
+        shell: bash
+        run: |
+          flutter create --platforms=android --org com.oliqarxklub --project-name oliqarx_klub_app /tmp/oliqarx_android_template
+          mkdir -p android/gradle
+          cp /tmp/oliqarx_android_template/android/gradlew android/gradlew
+          cp /tmp/oliqarx_android_template/android/gradlew.bat android/gradlew.bat
+          mkdir -p android/gradle/wrapper
+          cp /tmp/oliqarx_android_template/android/gradle/wrapper/* android/gradle/wrapper/
+          chmod +x android/gradlew
+
+      - name: Configure local Android SDK paths
+        shell: bash
+        run: |
+          FLUTTER_ROOT="$(dirname "$(dirname "$(command -v flutter)")")"
+          printf 'flutter.sdk=%s\nsdk.dir=%s\n' "$FLUTTER_ROOT" "$ANDROID_SDK_ROOT" > android/local.properties
+
+      - name: Resolve Dart dependencies
+        run: |
+          flutter config --no-analytics
+          flutter pub get
+
+      - name: Check Dart source (diagnostic)
+        run: dart analyze
+        continue-on-error: true
+
+      - name: Build release APK
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: oliqarxklub-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 7
