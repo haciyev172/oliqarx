@@ -619,21 +619,22 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               ],
               const SizedBox(height: 16),
               if (selfieUrl.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Image.network(
-                    selfieUrl,
-                    fit: BoxFit.contain,
-                    height: 280,
-                    errorBuilder: (context, error, stackTrace) => _emptyMessage(
-  'Selfie fotosunu yükləmək mümkün olmadı.',
-),
-                    ),
-                  ),
-                )
-              else
-                _emptyMessage('Bu qeydə aid selfie tapılmadı.'),
-              const SizedBox(height: 16),
+  ClipRRect(
+    borderRadius: BorderRadius.circular(14),
+    child: Image.network(
+      selfieUrl,
+      fit: BoxFit.contain,
+      height: 280,
+      errorBuilder: (context, error, stackTrace) =>
+          _emptyMessage(
+        'Selfie fotosunu yükləmək mümkün olmadı.',
+      ),
+    ),
+  )
+else
+  _emptyMessage('Bu qeydə aid selfie tapılmadı.'),
+
+const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: const Text('Bağla'),
