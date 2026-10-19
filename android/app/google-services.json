@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "494393874007",
+    "project_id": "oliqarx",
+    "storage_bucket": "oliqarx.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:494393874007:android:18ebb12e1f8f344459b512",
+        "android_client_info": {
+          "package_name": "com.oliqarxklub.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSctCxbq1lOtvz4GS7KYAMNT7jAheKgNU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
