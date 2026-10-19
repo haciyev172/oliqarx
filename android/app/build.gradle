@@ -37,7 +37,7 @@ android {
 
     defaultConfig {
         applicationId "com.oliqarxklub.app"
-        minSdk 21
+        minSdk 23
         targetSdk 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
