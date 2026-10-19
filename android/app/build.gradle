@@ -2,6 +2,7 @@ plugins {
     id "com.android.application"
     id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
 }
 
 def localProperties = new Properties()
@@ -60,8 +61,10 @@ flutter {
 dependencies {
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.2"
     implementation "androidx.multidex:multidex:2.0.1"
-}
 
-if (file("google-services.json").exists()) {
-    apply plugin: "com.google.gms.google-services"
+    // Firebase BoM
+    implementation platform("com.google.firebase:firebase-bom:35.0.2")
+
+    // Firebase Analytics
+    implementation "com.google.firebase:firebase-analytics"
 }
