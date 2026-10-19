@@ -16,9 +16,10 @@ dependencies:
   cloud_firestore: ^5.5.1
   firebase_storage: ^12.3.7
 
-  # Kamera və QR Kod Oxuyucu
-  mobile_scanner: ^5.2.3    # Sürətli və müasir QR kod skaneri
-  camera: ^0.11.0+2         # Ön kameradan anlıq selfie çəkilişi
+# Kamera və QR Kod Oxuyucu
+  mobile_scanner: ^5.2.3
+  qr_flutter: ^4.1.0
+  camera: ^0.11.0+2
   image_picker: ^1.1.2
 
   # Köməkçi Alətlər
