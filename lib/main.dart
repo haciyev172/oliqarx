@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'screens/login_screen.dart';
 import 'screens/worker_home_screen.dart';
@@ -15,6 +16,10 @@ Future<void> main() async {
   bool isFirebaseConnected = false;
 
   try {
+    // Azərbaycan dili üçün tarix məlumatlarını yüklə.
+    await initializeDateFormatting('az', null);
+
+    // Firebase-i başladırıq.
     await Firebase.initializeApp().timeout(
       const Duration(seconds: 15),
     );
@@ -27,9 +32,9 @@ Future<void> main() async {
           : 'Firebase başladılmadı.',
     );
   } on TimeoutException catch (e) {
-    debugPrint('Firebase başlatma vaxtı bitdi: $e');
+    debugPrint('Başlatma vaxtı bitdi: $e');
   } catch (e, stackTrace) {
-    debugPrint('Firebase başlatma xətası: $e');
+    debugPrint('Başlatma xətası: $e');
     debugPrintStack(stackTrace: stackTrace);
   }
 
@@ -61,9 +66,6 @@ class OliqarxKlubApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      builder: (context, child) {
-        return child ?? const SizedBox.shrink();
-      },
       home: AuthGate(
         isFirebaseConnected: isFirebaseConnected,
       ),
@@ -81,7 +83,6 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Firebase aktiv deyilsə, giriş ekranını aç.
     if (!isFirebaseConnected || Firebase.apps.isEmpty) {
       return const LoginScreen(isOfflineMode: true);
     }
@@ -89,45 +90,43 @@ class AuthGate extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, authSnapshot) {
-        if (authSnapshot.connectionState == ConnectionState.waiting) {
+        if (authSnapshot.connectionState ==
+            ConnectionState.waiting) {
           return const _LoadingScreen(
             message: 'Giriş vəziyyəti yoxlanılır...',
           );
         }
 
         if (authSnapshot.hasError) {
+          debugPrint(
+            'Authentication stream xətası: ${authSnapshot.error}',
+          );
+
           return _ErrorScreen(
-            message: 'Giriş məlumatları oxunmadı.',
-            onRetry: () {
-              _rebuildApp(context);
+            message:
+                'Giriş vəziyyətini yoxlamaq mümkün olmadı.',
+            onRetry: () async {
+              await FirebaseAuth.instance.signOut();
             },
           );
         }
 
-        final User? currentUser = authSnapshot.data;
+        final currentUser = authSnapshot.data;
 
-        // İstifadəçi daxil olmayıb.
         if (currentUser == null) {
           return const LoginScreen(isOfflineMode: false);
         }
 
-        // Daxil olmuş istifadəçinin rolunu yoxla.
-        return UserRoleGate(user: currentUser);
+        return UserRoleGate(
+          key: ValueKey(currentUser.uid),
+          user: currentUser,
+        );
       },
-    );
-  }
-
-  void _rebuildApp(BuildContext context) {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(isOfflineMode: false),
-      ),
-      (route) => false,
     );
   }
 }
 
-class UserRoleGate extends StatelessWidget {
+class UserRoleGate extends StatefulWidget {
   final User user;
 
   const UserRoleGate({
@@ -136,101 +135,112 @@ class UserRoleGate extends StatelessWidget {
   });
 
   @override
+  State<UserRoleGate> createState() => _UserRoleGateState();
+}
+
+class _UserRoleGateState extends State<UserRoleGate> {
+  late Future<DocumentSnapshot<Map<String, dynamic>>>
+      _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  void _loadProfile() {
+    _profileFuture = FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.user.uid)
+        .get()
+        .timeout(const Duration(seconds: 15));
+  }
+
+  void _retry() {
+    setState(() {
+      _loadProfile();
+    });
+  }
+
+  Future<void> _signOut() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      debugPrint('Çıxış xətası: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      future: FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get()
-          .timeout(const Duration(seconds: 15)),
+    return FutureBuilder<
+        DocumentSnapshot<Map<String, dynamic>>>(
+      future: _profileFuture,
       builder: (context, userSnapshot) {
-        if (userSnapshot.connectionState == ConnectionState.waiting) {
+        if (userSnapshot.connectionState ==
+            ConnectionState.waiting) {
           return const _LoadingScreen(
             message: 'İstifadəçi məlumatları yoxlanılır...',
           );
         }
 
-        // Firestore xətasında istifadəçiyə avtomatik rol vermə.
         if (userSnapshot.hasError) {
+          debugPrint(
+            'Firestore profil oxuma xətası: '
+            '${userSnapshot.error}',
+          );
+
           return _ErrorScreen(
             message:
-                'İstifadəçi məlumatlarını oxumaq mümkün olmadı. '
-                'İnternet bağlantısını və Firestore icazələrini yoxlayın.',
-            onRetry: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const LoginScreen(isOfflineMode: false),
-                ),
-                (route) => false,
-              );
-            },
+                'İstifadəçi məlumatlarını oxumaq mümkün olmadı.\n'
+                'İnternet bağlantısını və Firestore icazələrini '
+                'yoxlayın.\n\n'
+                'Xəta: ${userSnapshot.error}',
+            onRetry: _retry,
           );
         }
 
         final document = userSnapshot.data;
 
-        // Firestore sənədi mövcud deyilsə, girişə icazə vermə.
         if (document == null || !document.exists) {
           return _ErrorScreen(
             message:
                 'İstifadəçi profili tapılmadı. '
-                'Administrator Firestore-da profil yaratmalıdır.',
-            onRetry: () async {
-              await FirebaseAuth.instance.signOut();
-
-              if (!context.mounted) return;
-
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const LoginScreen(isOfflineMode: false),
-                ),
-                (route) => false,
-              );
-            },
+                'Firestore users kolleksiyasını yoxlayın.',
+            onRetry: _signOut,
           );
         }
 
-        final Map<String, dynamic> userData = document.data() ?? {};
+        final userData = document.data() ?? {};
 
-        final String role = (userData['role'] ?? '')
+        final role = (userData['role'] ?? '')
             .toString()
             .trim()
             .toUpperCase();
 
-        // Naməlum və ya səhv rol təhlükəsiz şəkildə rədd edilir.
+        debugPrint(
+          'Profil oxundu. UID: ${widget.user.uid}, '
+          'role: $role',
+        );
+
         if (role == 'ADMIN') {
           return AdminHomeScreen(
-            user: user,
+            user: widget.user,
             userData: userData,
           );
         }
 
         if (role == 'WORKER') {
           return WorkerHomeScreen(
-            user: user,
+            user: widget.user,
             userData: userData,
           );
         }
 
         return _ErrorScreen(
           message:
-              'İstifadəçi rolu düzgün təyin edilməyib. '
-              'Firestore-da role sahəsi ADMIN və ya WORKER olmalıdır.',
-          onRetry: () async {
-            await FirebaseAuth.instance.signOut();
-
-            if (!context.mounted) return;
-
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(
-                builder: (_) =>
-                    const LoginScreen(isOfflineMode: false),
-              ),
-              (route) => false,
-            );
-          },
+              'İstifadəçi rolu düzgün təyin edilməyib.\n'
+              'Firestore role sahəsi ADMIN və ya WORKER olmalıdır.',
+          onRetry: _signOut,
         );
       },
     );
@@ -279,6 +289,7 @@ class _ErrorScreen extends StatelessWidget {
   final VoidCallback onRetry;
 
   const _ErrorScreen({
+    super.key,
     required this.message,
     required this.onRetry,
   });
@@ -323,7 +334,7 @@ class _ErrorScreen extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Yenidən yoxla / girişə qayıt'),
+                  label: const Text('Yenidən yoxla'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
