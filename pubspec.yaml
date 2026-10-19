@@ -1,0 +1,38 @@
+name: oliqarx_klub_app
+description: "OliqarxKlub - İşçi Girişli QR + Həkim/Selfie Təsdiqli Android Mobil Tətbiqi"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase Servisləri (Ən stabil versiyalar)
+  firebase_core: ^3.8.1
+  firebase_auth: ^5.3.4
+  cloud_firestore: ^5.5.1
+  firebase_storage: ^12.3.7
+
+  # Kamera və QR Kod Oxuyucu
+  mobile_scanner: ^5.2.3    # Sürətli və müasir QR kod skaneri
+  camera: ^0.11.0+2         # Ön kameradan anlıq selfie çəkilişi
+  image_picker: ^1.1.2
+
+  # Köməkçi Alətlər
+  intl: ^0.19.0             # Tarix və saat formatlaşdırma
+  cached_network_image: ^3.4.1
+  flutter_spinkit: ^5.2.1   # Müasir yüklənmə indikatorları
+  shared_preferences: ^2.3.3 # Yerli keş yaddaşı
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
