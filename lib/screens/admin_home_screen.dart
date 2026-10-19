@@ -387,8 +387,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                               width: 50,
                               height: 50,
                               fit: BoxFit.cover,
-                              errorBuilder: (, _, _) =>
-                                  _personPlaceholder(),
+                              errorBuilder: (context, error, stackTrace) =>
+    _personPlaceholder(),
                             )
                           : _personPlaceholder(),
                     ),
