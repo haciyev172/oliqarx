@@ -126,7 +126,7 @@ class WorkerHomeScreen extends StatelessWidget {
                 }
                 return Column(
                   children: docs.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
+                    final data = doc.data();
                     final isCheckIn = data['type'] == 'CHECK_IN';
                     final time = data['created_at'] != null ? data['created_at'].toString().substring(11, 16) : "--:--";
                     return Card(
