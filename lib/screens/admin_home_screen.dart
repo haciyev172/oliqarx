@@ -625,8 +625,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     selfieUrl,
                     fit: BoxFit.contain,
                     height: 280,
-                    errorBuilder: (, _, _) => _emptyMessage(
-                      'Selfie fotosunu yükləmək mümkün olmadı.',
+                    errorBuilder: (context, error, stackTrace) => _emptyMessage(
+  'Selfie fotosunu yükləmək mümkün olmadı.',
+),
                     ),
                   ),
                 )
