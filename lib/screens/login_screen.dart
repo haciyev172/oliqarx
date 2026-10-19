@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Növbə & Davamiyyət Sistemi (PDKS)',
+                    'Davamiyyət Sistemi',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
@@ -223,7 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                       },
                       child: const Text(
-                        'Yeni İşçi Qeydiyyatı',
+                        'Qeydiyyat',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
