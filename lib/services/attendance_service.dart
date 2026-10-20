@@ -19,13 +19,19 @@ class AttendanceService {
 
     String selfieUrl = '';
     if (selfieFile != null) {
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('attendance_selfies/$workerId/$timestamp.jpg');
-      await ref.putFile(selfieFile);
-      selfieUrl = await ref.getDownloadURL();
-    }
+  try {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final ref = FirebaseStorage.instance
+        .ref()
+        .child('attendance_selfies/$workerId/$timestamp.jpg');
+
+    await ref.putFile(selfieFile);
+    selfieUrl = await ref.getDownloadURL();
+  } catch (e) {
+    debugPrint('Selfie yüklənmədi: $e');
+    selfieUrl = '';
+  }
+}
 
     final now = DateTime.now();
     await FirebaseFirestore.instance.collection('attendance_logs').add({
